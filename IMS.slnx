@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="IMS.CoreBusiness/IMS.CoreBusiness.csproj" Id="ac9945f4-a238-48d9-aee3-85bff47afd23" />
+  <Project Path="IMS.Plugins.EFCore/IMS.Plugins.EFCore.csproj" Id="bc6f87e5-3390-4319-aaa2-775807f968e9" />
+  <Project Path="IMS.UseCases/IMS.UseCases.csproj" Id="6bb8f134-5692-44c5-afb8-8496a04f3245" />
+  <Project Path="IMS_WebApp/IMS_WebApp.csproj" />
+</Solution>

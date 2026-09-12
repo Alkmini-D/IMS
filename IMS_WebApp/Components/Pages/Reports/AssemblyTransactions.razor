@@ -1,0 +1,109 @@
+﻿@page "/assemblyreport"
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+@inject ISearchAssemblyTransactionsUseCase SearchAssemblyTransactionsUseCase
+@inject IJSRuntime JSRuntime
+
+<h3>Assembly Transactions</h3>
+<br />
+
+<div id="printarea">
+    <div class="row">
+        <div class="col">
+            <label for="inv">Assembly Name</label>
+            <input type="text" id="inv" class="form-control" @bind-value="prodName" />
+        </div>
+        <div class="col">
+            <label for="df">Date From</label>
+            <input type="date" id="df" class="form-control" @bind-value="dateFrom" />
+        </div>
+        <div class="col">
+            <label for="dt">Date To</label>
+            <input type="date" id="dt" class="form-control" @bind-value="dateTo" />
+        </div>
+        <div class="col">
+            <label for="at">Activity Type</label>
+            <select id="at" class="form-control" @bind="activityTypeId">
+                <option value="0"></option>
+                <option value="1">Produce Assembly</option>
+                <option value="2">Sell Assembly</option>
+            </select>
+        </div>
+        <div class="col">
+            <label>&nbsp;</label>
+            <button type="button" class="btn btn-primary form-control" @onclick="SearchAssemblies">Search</button>
+        </div>
+        <div class="col">
+            <label>&nbsp;</label>
+            <button type="button" class="btn btn-primary form-control" @onclick="PrintReport">Print</button>
+        </div>
+    </div>
+    <br />
+    @if (assemblyTransactions != null)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Assembly</th>
+                    <th>Activity</th>
+                    <th>Qty Before</th>
+                    <th>Qty After</th>
+                    <th>Production #</th>
+                    <th>SO#</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pt in assemblyTransactions)
+                {
+                    <tr>
+                        <td>@pt.TransactionDate.ToString("MM/dd/yyyy")</td>
+                        <td>@pt.Assembly.AssemblyName</td>
+                        <td>
+                            @if (pt.ActivityType == AssemblyTransactionType.ProduceAssembly)
+                            {
+                                <text>Produce</text>
+                            }
+                            else if (pt.ActivityType == AssemblyTransactionType.SellAssembly)
+                            {
+                                <text>Sell</text>
+                            }
+                        </td>
+                        <td>@pt.QuantityBefore</td>
+                        <td>@pt.QuantityAfter</td>
+                        <td>@pt.ProductionNumber</td>
+                        <td>@pt.SalesOrderNumber</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private string prodName;
+    private DateTime? dateFrom;
+    private DateTime? dateTo;
+    private int activityTypeId = 0;
+    private IEnumerable<AssemblyTransaction> assemblyTransactions;
+
+    private async Task SearchAssemblies()
+    {
+        AssemblyTransactionType? assemblyTransactionType = null;
+        if (activityTypeId != 0) assemblyTransactionType = (AssemblyTransactionType)activityTypeId;
+
+        assemblyTransactions = await SearchAssemblyTransactionsUseCase.ExecuteAsync(
+            prodName,
+            dateFrom,
+            dateTo,
+            assemblyTransactionType);
+    }
+
+    private void PrintReport()
+    {
+        JSRuntime.InvokeVoidAsync("print");
+    }
+
+}

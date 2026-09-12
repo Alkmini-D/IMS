@@ -1,0 +1,41 @@
+﻿@using IMS.CoreBusiness
+@using IMS.UseCases
+@inject NavigationManager NavigationManager
+@inject IDeleteAssemblyUseCase DeleteAssemblyUseCase
+
+@if (Assembly != null)
+{
+    <tr>
+        <td>@Assembly.AssemblyName</td>
+        <td>@Assembly.Quantity</td>
+        <td>@Assembly.Price.ToString("c")</td>
+        <td>
+            <button type="button" class="btn btn-light" @onclick="@(() => EditAssembly(Assembly.AssemblyId))">Edit</button>
+            <button type="button" class="btn btn-light" @onclick="@(async () => await DeleteAssembly(Assembly))">Delete</button>
+        </td>
+    </tr>
+}
+
+
+@code {
+
+    [Parameter]
+    public Assembly? Assembly { get; set; }
+
+    [Parameter]
+    public EventCallback OnAssemblyDeleted { get; set; }
+
+    private void EditAssembly(int assemblyId)
+    {
+        NavigationManager.NavigateTo($"/editassembly/{assemblyId}");
+    }
+
+    private async Task DeleteAssembly(Assembly assembly)
+    {
+        await DeleteAssemblyUseCase.ExecuteAsync(assembly.AssemblyId);
+
+        //we will need to let the parent component know about our soft delete so that it can reload the products and refresh the screen
+        await OnAssemblyDeleted.InvokeAsync();
+    }
+
+}

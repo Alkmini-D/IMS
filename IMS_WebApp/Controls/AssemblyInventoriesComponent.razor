@@ -1,0 +1,70 @@
+﻿@using IMS.CoreBusiness
+
+<div class="form-group">
+    <label>Inventories</label>            
+    <ViewInventoriesComponent 
+        DisplaySearchResult="true"
+        OnSelectInventory="OnSelectInventory"
+    ></ViewInventoriesComponent>
+</div>
+@if (AssemblyInventories != null && AssemblyInventories.Count > 0)
+{   
+     <table class="table">   
+         <thead>
+             <tr>
+                 <th>Name</th>
+                 <th>Quantity</th>
+                 <th></th>
+             </tr>
+         </thead>
+         <tbody>
+            @foreach(var assemblyInventory in this.AssemblyInventories)
+            {
+                 <tr>
+                     <td>
+                         @assemblyInventory.Inventory.InventoryName
+                     </td>
+                     <td>                         
+                        <input type="number" min="0" 
+                            @bind-value="assemblyInventory.InventoryQuantity"
+                            @bind-value:event="oninput"
+                            @onchange="OnInventoryQtyChanged"/>
+                     </td>
+                     <td>
+                         <button class="btn btn-link" type="button" @onclick="@(()=>RemoveInventory(assemblyInventory))">Remove</button>
+                     </td>
+                 </tr>   
+            }            
+         </tbody>
+    </table>   
+}
+
+@code {
+
+    [Parameter]
+    public EventCallback<List<AssemblyInventory>> OnInventorySelected { get; set; }
+
+    [Parameter]
+    public List<AssemblyInventory> AssemblyInventories { get; set; } = new List<AssemblyInventory>(); 
+
+    private async Task OnInventoryQtyChanged()
+    {
+        await OnInventorySelected.InvokeAsync(this.AssemblyInventories);
+    }
+
+    private async Task OnSelectInventory(Inventory inventory)
+    {
+        if (!AssemblyInventories.Any(x => x.Inventory.InventoryName.Equals(inventory.InventoryName, StringComparison.OrdinalIgnoreCase)))
+        {
+            this.AssemblyInventories.Add(new AssemblyInventory { InventoryId = inventory.InventoryId, Inventory = inventory});
+        }
+
+        await OnInventorySelected.InvokeAsync(this.AssemblyInventories);
+    }
+
+    private void RemoveInventory(AssemblyInventory assemblyInventory)
+    {
+        this.AssemblyInventories.Remove(assemblyInventory);
+    }
+
+}

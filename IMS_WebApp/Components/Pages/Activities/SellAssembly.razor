@@ -1,0 +1,88 @@
+﻿@page "/sell"
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+
+@inject ISellAssemblyUseCase SellAssemblyUseCase
+
+<ErrorMessageComponent ErrorMessage="@errorMessage"></ErrorMessageComponent>
+<h3>Sell Product</h3>
+<br/>
+@if (sellViewModel != null)
+{
+    <EditForm Model="sellViewModel" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+        <div class="form-group">
+            <label for="po">Sales Order Number</label>
+            <InputText id="po" @bind-Value="sellViewModel.SalesOrderNumber" class="form-control"></InputText>
+        </div>
+
+        <div class="form-group">
+            <label for="inv">Product to Sell</label>
+            <ViewAssembliesComponent 
+                OnSelectAssembly="OnSelectAssembly"
+                DisplaySearchResult="true"></ViewAssembliesComponent>                   
+            <InputText id="inv" class="form-control" @bind-Value="sellViewModel.AssemblyName" disabled></InputText>            
+            <input type="hidden" value="@sellViewModel.AssemblyId" />  
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price</label>
+            <InputNumber id="price" @bind-Value="sellViewModel.AssemblyPrice" class="form-control"></InputNumber>
+        </div>
+
+        <div class="form-group">
+            <label for="qty">Quantity</label>
+            <InputNumber id="qty" @bind-Value="sellViewModel.QuantityToSell" class="form-control"></InputNumber>
+        </div>
+        <br/>
+        <button type="submit" class="btn btn-primary">Produce</button>
+
+    </EditForm>
+}
+
+@code {
+    private SellViewModel sellViewModel = new SellViewModel();
+    private Assembly selectedAssembly;
+    private string errorMessage;
+
+    private void OnValidSubmit()
+    {
+       
+        if (this.selectedAssembly.Quantity < this.sellViewModel.QuantityToSell)
+        {
+            this.errorMessage = $"The quantity of the product is not enough. Only {this.selectedAssembly.Quantity} are available.";
+            return;
+        }
+        else
+        {
+            this.errorMessage = string.Empty;
+        }
+
+        SellAssemblyUseCase.ExecuteAsync(
+            this.sellViewModel.SalesOrderNumber,
+            this.selectedAssembly,
+            this.sellViewModel.QuantityToSell,
+            "User"
+        );
+
+        this.sellViewModel = new SellViewModel();
+        this.selectedAssembly = null;
+        this.errorMessage = string.Empty;
+    }
+
+    private void OnSelectAssembly(Assembly assembly)
+    {
+        this.selectedAssembly = assembly;
+        sellViewModel.AssemblyId = assembly.AssemblyId;
+        sellViewModel.AssemblyName = assembly.AssemblyName;
+        sellViewModel.AssemblyPrice = assembly.Price;
+    }
+
+
+
+}
+

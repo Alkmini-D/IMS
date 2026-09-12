@@ -1,0 +1,66 @@
+﻿@page "/editassembly/{id:int}"
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+@inject NavigationManager NavigationManager
+@inject IViewAssemblyByIdUseCase ViewAssemblyByIdUseCase
+@inject IEditAssemblyUseCase EditAssemblyUseCase
+
+<h3>Edit Assembly</h3>
+<br/>
+@if (this.assembly != null)
+{
+    <EditForm Model="assembly" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+
+        <div class="form-group">
+            <label for="name">Assembly Name</label>
+            <InputText id="name" @bind-Value="assembly.AssemblyName" class="form-control"></InputText>
+        </div>
+
+        <div class="form-group">
+            <label for="qty">Quantity</label>
+            <InputNumber id="qty" @bind-Value="assembly.Quantity" class="form-control"></InputNumber>
+        </div>
+
+        <div class="form-group">
+            <label for="price">Price</label>
+            <InputNumber id="price" @bind-Value="assembly.Price" class="form-control"></InputNumber>
+        </div>
+
+        <AssemblyInventoriesComponent 
+            AssemblyInventories = "assembly.AssemblyInventories"
+            OnInventorySelected="OnInventorySelected"
+        ></AssemblyInventoriesComponent>
+
+        <br/>
+        <button type="submit" class="btn btn-primary">Save</button>
+
+    </EditForm>
+}
+
+@code {
+    private Assembly assembly;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        this.assembly = await ViewAssemblyByIdUseCase.ExecuteAsync(this.Id);
+    }
+
+    private void OnInventorySelected(List<AssemblyInventory> assemblyInventories)
+    {
+        this.assembly.AssemblyInventories = assemblyInventories;
+    }
+
+    private void OnValidSubmit()
+    {
+        EditAssemblyUseCase.ExecuteAsync(this.assembly);
+        NavigationManager.NavigateTo("/assemblies");
+    }
+}
+

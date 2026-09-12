@@ -1,0 +1,78 @@
+﻿@using IMS.CoreBusiness
+@using IMS.UseCases
+@inject IViewAssembliesByNameUseCase ViewAssembliesByNameUseCase
+
+<div class="input-group">
+    <input type="text"
+           class="form-control form-control-lg"
+           placeholder="Type assembly name here to search"
+           @bind-value="assemblyNameToSearch"
+           @bind-value:event="oninput" />
+    <button type="button" class="input-group-text btn-success"
+            @onclick="@( async()=> { await ViewAssemblies(); } )">
+        View
+    </button>
+</div>
+@if (this.DisplaySearchResult
+    && _assemblies != null
+    && selectedAssembly == null)
+{
+    <div style="overflow-y:auto; max-height:300px; border:1px solid silver; padding-top:5px">
+        <ul style="list-style-type:none">
+            @foreach (var inv in _assemblies)
+            {
+                <li style="cursor:pointer" @onclick="@(async () => { await SelectAssembly(inv); })"
+                    @key="inv.AssemblyId">@inv.AssemblyName</li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    private string? _assemblyNameToSearch;
+    public string assemblyNameToSearch
+    {
+        get => _assemblyNameToSearch;
+        set
+        {
+            _assemblyNameToSearch = value;
+            if (!string.IsNullOrWhiteSpace(_assemblyNameToSearch) &&
+                _assemblyNameToSearch.Length > 2)
+            {
+                ViewAssemblies();
+            }
+        }
+    }
+
+
+    private List<Assembly>? _assemblies;
+    private Assembly? selectedAssembly;
+
+    [Parameter]
+    public EventCallback<List<Assembly>> OnSearchAssemblies { get; set; }
+
+    [Parameter]
+    public bool DisplaySearchResult { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<Assembly> OnSelectAssembly { get; set; }
+
+    private async Task ViewAssemblies()
+    {
+        var assemblies = (await ViewAssembliesByNameUseCase
+            .ExecuteAsync(assemblyNameToSearch ?? string.Empty))?.ToList();
+
+        await OnSearchAssemblies.InvokeAsync(assemblies);
+        _assemblies = assemblies;
+        this.selectedAssembly = null;
+
+        StateHasChanged();
+    }
+
+    private async Task SelectAssembly(Assembly assembly)
+    {
+        await OnSelectAssembly.InvokeAsync(assembly);
+        selectedAssembly = assembly;
+    }
+
+}

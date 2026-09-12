@@ -1,0 +1,68 @@
+﻿@page "/assemblies"
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+@inject NavigationManager NavigationManager
+@inject IViewAssembliesByNameUseCase ViewAssembliesByNameUseCase
+
+<h3>Assembly List</h3>
+<br/>
+
+<ViewAssembliesComponent OnSearchAssemblies="OnSearchAssemblies"></ViewAssembliesComponent>
+
+@if (listAssemblies != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var assembly in this.listAssemblies)
+            {
+                <AssemblyItemComponent 
+                    Assembly="assembly"
+                    OnAssemblyDeleted="OnAssemblyDeleted"></AssemblyItemComponent>
+            }
+        </tbody>
+    </table>    
+}
+<br/>
+<button type="button" class="btn btn-primary" @onclick="AddAssembly">Add Assembly</button>
+
+
+@code {
+    private List<Assembly>? listAssemblies;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAssemblies();
+    }
+
+    private void OnSearchAssemblies(List<Assembly> assemblies)
+    {
+        this.listAssemblies = assemblies;
+    }
+
+    private void AddAssembly()
+    {
+        NavigationManager.NavigateTo("/addassembly");
+    }
+
+    private async Task OnAssemblyDeleted()
+    {
+        await LoadAssemblies();
+    }
+
+    private async Task LoadAssemblies()
+    {
+        var prods = await ViewAssembliesByNameUseCase.ExecuteAsync();
+        this.listAssemblies = prods.ToList();
+    }
+
+}
